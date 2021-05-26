@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <cuda_runtime.h>
+#include <openacc.h>
 
 int getMemHandleSize()
 {
@@ -52,3 +53,8 @@ int closeMemHandle(void *mem)
 	return 0;
 }
 
+int mapACCData(void *host, void *device, int n)
+{
+	acc_map_data(host, device, n*sizeof(double));
+	return 0;
+}
