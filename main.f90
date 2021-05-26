@@ -30,10 +30,17 @@ program shared_gpu
 
   interface
     integer function openMemHandle(mem, handle_str) bind(C,name="openMemHandle")
+        use iso_c_binding
         use openacc
-        use,intrinsic :: iso_c_binding
         type(c_devptr),intent(inout) :: mem
         type(c_ptr),value,intent(in) :: handle_str
+    end function
+  end interface
+
+  interface
+    integer function closeMemHandle(mem) bind(C,name="closeMemHandle")
+        use iso_c_binding
+        type(c_ptr),value,intent(in) :: mem
     end function
   end interface
 
@@ -104,6 +111,8 @@ program shared_gpu
       mem(i) = 2.0
     end do
     !$acc end parallel loop
+
+    err = closeMemHandle(mem_cptr)
 
     call mpi_barrier(MPI_COMM_WORLD)
   endif
