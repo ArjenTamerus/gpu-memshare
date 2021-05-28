@@ -40,7 +40,8 @@ program shared_gpu
   interface
     integer function closeMemHandle(mem) bind(C,name="closeMemHandle")
         use iso_c_binding
-        type(c_ptr),value,intent(in) :: mem
+        use openacc
+        type(c_devptr),value,intent(in) :: mem
     end function
   end interface
 
@@ -65,11 +66,11 @@ program shared_gpu
     master = .false.
   endif
 
-  allocate(mem(NELEM))
-
   handle_size = getMemHandleSize()
 
   if(master) then
+    allocate(mem(NELEM))
+
     !$acc data copy(mem)
 
     !$acc parallel loop
@@ -97,6 +98,7 @@ program shared_gpu
     call mpi_barrier(MPI_COMM_WORLD)
     !$acc end data
   else
+    allocate(mem(0))
     call mpi_bcast(handle_str_s, handle_size, MPI_BYTE, 0, MPI_COMM_WORLD, err)
 
     mem_cptr = c_loc(mem)
@@ -112,7 +114,8 @@ program shared_gpu
     end do
     !$acc end parallel loop
 
-    err = closeMemHandle(mem_cptr)
+    err = closeMemHandle(mem_cdevptr)
+    write(*,*) "CLOSE_ERR: ", err
 
     call mpi_barrier(MPI_COMM_WORLD)
   endif
